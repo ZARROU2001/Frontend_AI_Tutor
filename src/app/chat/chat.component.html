@@ -1,0 +1,96 @@
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">🎓</span>
+      <span class="logo-text">KI Tutor</span>
+    </div>
+
+    <div class="sidebar-section">
+      <p class="sidebar-label">Status</p>
+      <div class="status-badge" [class.online]="backendOnline" [class.offline]="!backendOnline">
+        <span class="status-dot"></span>
+        {{ backendOnline ? 'Backend online' : 'Backend offline' }}
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <p class="sidebar-label">Schnellvorschläge</p>
+      <button
+        *ngFor="let hint of ROUTE_HINTS"
+        class="hint-btn"
+        (click)="useHint(hint.example)"
+      >
+        <span class="hint-prefix">{{ hint.prefix }}</span>
+        <span class="hint-label">{{ hint.label }}</span>
+        <span class="hint-example">{{ hint.example }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main chat area -->
+  <main class="chat-area">
+    <header class="chat-header">
+      <h1>Lern-Chat</h1>
+      <p class="chat-subtitle">Fragen zu deinen Vorlesungsfolien</p>
+    </header>
+
+    <!-- Messages -->
+    <section class="messages">
+      <div
+        *ngFor="let msg of messages"
+        class="message-row"
+        [class.user-row]="msg.role === 'user'"
+        [class.assistant-row]="msg.role === 'assistant'"
+      >
+        <div class="avatar">
+          {{ msg.role === 'user' ? '👤' : '🎓' }}
+        </div>
+
+        <div class="bubble-wrap">
+          <!-- Loading dots -->
+          <div *ngIf="msg.loading" class="bubble loading-bubble">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+
+          <!-- Normal message -->
+          <div *ngIf="!msg.loading" class="bubble" [class.error-bubble]="msg.error">
+            <p class="bubble-text" [innerHTML]="msg.text | linebreaks"></p>
+          </div>
+
+          <!-- Metadata tags -->
+          <div *ngIf="msg.route" class="meta-row">
+            <span class="meta-tag route-tag">{{ routeIcon(msg.route) }} {{ msg.route }}</span>
+            <span *ngFor="let lbl of msg.labels" class="meta-tag label-tag">{{ lbl }}</span>
+            <span *ngIf="msg.slides && msg.slides.length > 0" class="meta-tag slide-tag">
+              📄 Folien: {{ msg.slides.join(', ') }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div #messagesEnd></div>
+    </section>
+
+    <!-- Input bar -->
+    <footer class="input-bar">
+      <textarea
+        [(ngModel)]="inputText"
+        (keydown)="onKeydown($event)"
+        placeholder="Stell eine Frage… (Enter zum Senden)"
+        rows="1"
+        [disabled]="isLoading"
+        class="input-textarea"
+      ></textarea>
+      <button
+        (click)="send()"
+        [disabled]="isLoading || !inputText.trim()"
+        class="send-btn"
+      >
+        {{ isLoading ? '…' : '➤' }}
+      </button>
+    </footer>
+  </main>
+
+</div>
