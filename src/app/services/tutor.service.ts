@@ -14,6 +14,12 @@ export interface AskResponse {
   label_scores: LabelScore[];
   slides_used: number[];
   answer: string;
+  guard_in_scope?: boolean | null;
+  guard_reason?: string | null;
+  top_slide_page?: number | null;
+  top_slide_text?: string | null;
+  slide_image_url?: string | null;
+  slides_preview?: { page?: number | null; text?: string | null; image_url?: string | null }[];
 }
 
 export interface HealthResponse {

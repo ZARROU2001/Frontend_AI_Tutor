@@ -5,10 +5,6 @@
     <div class="sidebar-logo">
       <span class="logo-icon">🎓</span>
       <span class="logo-text">KI Tutor</span>
-    </div>
-
-    <div class="sidebar-section">
-      <p class="sidebar-label">Status</p>
       <div class="status-badge" [class.online]="backendOnline" [class.offline]="!backendOnline">
         <span class="status-dot"></span>
         {{ backendOnline ? 'Backend online' : 'Backend offline' }}
@@ -66,6 +62,31 @@
             <span *ngIf="msg.slides && msg.slides.length > 0" class="meta-tag slide-tag">
               📄 Folien: {{ msg.slides.join(', ') }}
             </span>
+          </div>
+
+          <div *ngIf="msg.role === 'assistant' && msg.guardInScope !== undefined" class="guard-row" [class.guard-ok]="msg.guardInScope" [class.guard-reject]="msg.guardInScope === false">
+            <span class="guard-badge">Kontrollschritt</span>
+            <span class="guard-text" *ngIf="msg.guardInScope">Passt zum Folienkontext</span>
+            <span class="guard-text" *ngIf="msg.guardInScope === false">Außerhalb des Wissensbereichs{{ msg.guardReason ? ': ' + msg.guardReason : '' }}</span>
+          </div>
+
+          <!-- Slides carousel preview -->
+          <div *ngIf="msg.role === 'assistant' && msg.slidesPreview && msg.slidesPreview.length" class="slide-card">
+            <div class="slide-card-header">
+              <div>
+                <p class="slide-card-title">Wichtigste Folien</p>
+                <p class="slide-card-subtitle">{{ msg.slidesPreview[msg.currentSlideIndex ?? 0].page ? 'Seite ' + msg.slidesPreview[msg.currentSlideIndex ?? 0].page : '' }}</p>
+              </div>
+              <div class="slide-nav">
+                <button class="nav-btn" (click)="prevSlide(msg)" [disabled]="!((msg.currentSlideIndex ?? 0) > 0)">◀</button>
+                <span class="nav-counter">{{ (msg.currentSlideIndex ?? 0) + 1 }} / {{ msg.slidesPreview.length }}</span>
+                <button class="nav-btn" (click)="nextSlide(msg)" [disabled]="(msg.currentSlideIndex ?? 0) >= (msg.slidesPreview.length - 1)">▶</button>
+              </div>
+            </div>
+            <div class="slide-card-body">
+              <img *ngIf="msg.slidesPreview[msg.currentSlideIndex ?? 0].imageUrl" [src]="msg.slidesPreview[msg.currentSlideIndex ?? 0].imageUrl" class="slide-image" alt="Folie" />
+              <pre *ngIf="!msg.slidesPreview[msg.currentSlideIndex ?? 0].imageUrl && msg.slidesPreview[msg.currentSlideIndex ?? 0].text" class="slide-text">{{ msg.slidesPreview[msg.currentSlideIndex ?? 0].text }}</pre>
+            </div>
           </div>
         </div>
       </div>

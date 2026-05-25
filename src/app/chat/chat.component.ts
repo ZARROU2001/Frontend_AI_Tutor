@@ -10,6 +10,13 @@ export interface Message {
   route?: string;
   labels?: string[];
   slides?: number[];
+  guardInScope?: boolean | null;
+  guardReason?: string | null;
+  topSlidePage?: number | null;
+  topSlideText?: string | null;
+  slideImageUrl?: string | null;
+  slidesPreview?: { page?: number | null; text?: string | null; imageUrl?: string | null }[];
+  currentSlideIndex?: number;
   loading?: boolean;
   error?: boolean;
 }
@@ -68,12 +75,28 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.tutorService.ask(question).subscribe({
       next: (res: AskResponse) => {
         const idx = this.messages.lastIndexOf(placeholder);
+        let slidesPreview = (res.slides_preview || []).map((s: any) => ({ page: s.page, text: s.text, imageUrl: s.image_url }));
+        // Fallback: if backend did not provide slides_preview but provided a single slide_image_url or top_slide_text,
+        // create a single-entry slidesPreview so the UI can show the preview card (and navigation when >1).
+        if ((!slidesPreview || slidesPreview.length === 0) && (res.slide_image_url || res.top_slide_text)) {
+          slidesPreview = [{ page: res.top_slide_page ?? null, text: res.top_slide_text ?? null, imageUrl: res.slide_image_url ?? null }];
+        }
+
+        console.log('slidesPreview received from API:', slidesPreview);
+
         this.messages[idx] = {
           role: 'assistant',
           text: res.answer,
           route: res.route,
           labels: res.predicted_labels,
           slides: res.slides_used,
+          guardInScope: res.guard_in_scope ?? null,
+          guardReason: res.guard_reason ?? null,
+          topSlidePage: res.top_slide_page,
+          topSlideText: res.top_slide_text,
+          slideImageUrl: res.slide_image_url,
+          slidesPreview,
+          currentSlideIndex: slidesPreview && slidesPreview.length ? 0 : undefined,
         };
         this.isLoading = false;
       },
@@ -104,6 +127,19 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     const icons: Record<string, string> = { tutor: '📖', summary: '📝', quiz: '🧠' };
     return icons[route ?? ''] ?? '📖';
   }
+
+  prevSlide(msg: Message): void {
+    if (!msg.slidesPreview || !msg.slidesPreview.length) return;
+    msg.currentSlideIndex = Math.max(0, (msg.currentSlideIndex ?? 0) - 1);
+  }
+
+  nextSlide(msg: Message): void {
+    if (!msg.slidesPreview || !msg.slidesPreview.length) return;
+    const max = msg.slidesPreview.length - 1;
+    msg.currentSlideIndex = Math.min(max, (msg.currentSlideIndex ?? 0) + 1);
+  }
+
+  
 
   private scrollToBottom(): void {
     try { this.messagesEnd.nativeElement.scrollIntoView({ behavior: 'smooth' }); }
