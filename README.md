@@ -161,8 +161,8 @@ source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Backend starten
-cd backend/main
-uvicorn main:app --reload --port 8000
+cd backend
+uvicorn main:app --reload
 
 # Frontend starten
 docker run -d -p 8080:80 azzeddine24/ki_tutor_front
